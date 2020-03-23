@@ -76,7 +76,7 @@ class Person:
         for i in range(param_size):
             prob = np.random.randint(0,100)
             if(prob<15):
-                self.params[i] = random.uniform(param_min,param_max)
+                self.params[i] = max(param_min, min(param_max, self.params[i] * random.uniform(-1.5, 1.5)))
 
     def define_parents(self, parents):
         partition = np.random.randint(0, param_size)
@@ -110,6 +110,7 @@ if __name__ == "__main__":
         print(i)
         initial_population.cal_errors()
         initial_population.cal_probs()
+        print(max(initial_population.errors))
         next_population = Population()
         next_population.people = initial_population.get_next_generation()
         initial_population = next_population
