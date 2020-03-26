@@ -10,7 +10,7 @@ overfit = [10, 0.1240317450077846, -6.211941063144333, 0.04933903144709126, 0.03
 
 population_size = 50
 
-iteration_count = 10
+iteration_count = 15
 
 param_min = -10
 param_max = 10
@@ -18,7 +18,7 @@ param_max = 10
 param_size = 11
 
 data_collected = []
-mutation_deviation = 1
+mutation_deviation = 10
 
 overfit_init_pop = 0
 overfit_init_mutated = 20
@@ -40,9 +40,15 @@ class Population:
     probabilities = []
 
     def init_random(self):
-        self.people = [Person(True, False) for i in range(overfit_init_pop)]
-        self.people += [Person(True, True) for i in range(overfit_init_mutated)]
-        self.people += [Person() for i in range(population_size - (overfit_init_pop + overfit_init_mutated))]
+        self.people = [Person() for i in range(population_size)]
+        # self.people += [Person(True, True) for i in range(overfit_init_mutated)]
+        # self.people += [Person() for i in range(population_size - (overfit_init_pop + overfit_init_mutated))]
+        
+        with open("combined_results",'r') as f:
+            combined = json.load(f)
+            for i in range(population_size):
+                self.people[i].params = combined[i][0]
+            
 
     def cal_errors(self):
         self.errors = np.array([person.cal_error() for person in self.people])
@@ -54,11 +60,9 @@ class Population:
         # self.probabilities = np.exp(self.errors) / np.sum(np.exp(self.errors), axis=0)
         # self.probabilities = sft([self.errors])[0]
         self.probabilities = [abs(err)/sum(abs(self.errors)) for err in self.errors]
-        print(self.probabilities)
+        # print(self.probabilities)
     
     def generate_new_child(self):
-        # print(self.probabilities)
-        # print(np.sum(self.probabilities))
         parents = np.random.choice(self.people, 2, replace=True, p=self.probabilities)
         child = Person()
         child.define_parents(parents)
@@ -68,25 +72,26 @@ class Population:
         next_generation = []
         next_generation = [self.generate_new_child() for i in range(population_size)]
         return next_generation
+
+
 class Person:
     params = []
 
-    def __init__(self, is_overfit = False, every_feat = False):
+    def __init__(self, is_overfit = False):
         if is_overfit:
             self.params = np.array(overfit)
         else:
             self.params = np.array([random.uniform(param_min,param_max) for i in range(param_size)])
-        self.mutate(every_feat)
+        self.mutate()
 
-    def mutate(self, every_feat = False):
-        if every_feat: 
+    def mutate(self):
             for i in range(param_size):
                 prob = np.random.randint(0,100)
                 if(prob<15):
-                    self.params[i] += random.uniform((param_min-self.params[i]), (param_max-self.params[i]))
-        else: 
-            i = np.random.randint(0,param_size)
-            self.params[i] += random.uniform((param_min-self.params[i])/mutation_deviation, (param_max-self.params[i])/mutation_deviation)
+                    dev = abs(self.params[i])/mutation_deviation
+                    self.params[i] += random.uniform(-dev, dev)
+                    self.params[i] = min(param_max,self.params[i])
+                    self.params[i] = max(param_min,self.params[i])
 
     def define_parents(self, parents):
         partition = np.random.randint(0, param_size)
@@ -99,20 +104,11 @@ class Person:
         err = get_errors(team_id, list(self.params))
 
         data_collected.append((list(self.params), list(err)))
-        # print(data_collected)
-        # data.append((list(self.params), err))
-        # outfile.seek(0)
-        # json.dump(data, outfile, indent=2)
-
-        return 1/(0.3 * err[0] + 0.7 * err[1])
+        return 1/(0.4 * err[0] + 0.4 * err[1] + 0.2 * abs(err[1]-err[0]))
 
         
 
 if __name__ == "__main__":
-    # err = get_errors(team_id, overfit)
-    # print(err)
-    # assert len(err) == 2
-
     data_collected = []
 
     initial_population = Population()
