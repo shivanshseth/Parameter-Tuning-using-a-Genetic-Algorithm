@@ -10,7 +10,7 @@ overfit = [10, 0.1240317450077846, -6.211941063144333, 0.04933903144709126, 0.03
 
 population_size = 50
 
-iteration_count = 15
+iteration_count = 10
 
 param_min = -10
 param_max = 10
@@ -18,10 +18,9 @@ param_max = 10
 param_size = 11
 
 data_collected = []
-mutation_deviation = 10
+mutation_deviation = 400
+prob_of_mutation = 40
 
-overfit_init_pop = 0
-overfit_init_mutated = 20
 
 def sample_err(params):
     err=0
@@ -87,7 +86,7 @@ class Person:
     def mutate(self):
             for i in range(param_size):
                 prob = np.random.randint(0,100)
-                if(prob<15):
+                if(prob<prob_of_mutation):
                     dev = abs(self.params[i])/mutation_deviation
                     self.params[i] += random.uniform(-dev, dev)
                     self.params[i] = min(param_max,self.params[i])
