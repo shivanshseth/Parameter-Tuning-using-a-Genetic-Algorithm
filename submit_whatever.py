@@ -2,7 +2,7 @@ import json
 import pickle
 from client_moodle import get_errors,submit
 submitted = set()
-to_be_submitted = 30
+to_be_submitted = 500
 
 with open('submitted_results','rb') as sf:
     submitted = pickle.load(sf)
